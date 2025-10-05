@@ -1,37 +1,55 @@
 <template>
   <div class="app-shell">
-    <main class="page-main">
-      <RequestFilters
-        v-model:activeTab="activeTab"
-        v-model:selectedTag="selectedTag"
-        v-model:showPendingOnly="showPendingOnly"
+    <!-- 主要頁面 -->
+    <div v-if="!createDialogVisible" class="main-page">
+      <main class="page-main">
+        <RequestFilters
+          v-model:activeTab="activeTab"
+          v-model:selectedTag="selectedTag"
+          v-model:showPendingOnly="showPendingOnly"
+          :type-options="typeOptions"
+        />
+
+        <RequestList
+          :requests="visibleRequests"
+          :loading="loading"
+          :loadin="loadingMore"
+          :has-more="hasMore"
+          :total-items="totalItems"
+          :type-meta="typeMeta"
+          :completed-collapsed="completedCollapsed"
+          @delivery="openDelivery"
+          @toggle-collapse="toggleCompletedCollapse"
+          @load-more="loadMoreRequests"
+        />
+      </main>
+
+      <footer class="page-footer">
+        若您有能力提供物資，請優先以「我要配送」填寫可支援的數量，感謝協助。
+      </footer>
+
+      <!-- 固定底部按鈕 -->
+      <div class="fixed-bottom-container">
+        <el-button 
+          class="fixed-bottom-button" 
+          type="primary" 
+          size="large"
+          @click="openCreate"
+        >
+          我有物資需求
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 新增物資需求頁面 -->
+    <div v-else class="create-page">
+      <CreateRequestPage
         :type-options="typeOptions"
-      />
-
-      <RequestList
-        :requests="visibleRequests"
-        :loading="loading"
-        :loadin="loadingMore"
-        :has-more="hasMore"
-        :total-items="totalItems"
         :type-meta="typeMeta"
-        :completed-collapsed="completedCollapsed"
-        @delivery="openDelivery"
-        @toggle-collapse="toggleCompletedCollapse"
-        @load-more="loadMoreRequests"
+        @submit="handleCreateSubmit"
+        @close="createDialogVisible = false"
       />
-    </main>
-
-    <footer class="page-footer">
-      若您有能力提供物資，請優先以「我要配送」填寫可支援的數量，感謝協助。
-    </footer>
-
-    <CreateRequestDialog
-      v-model="createDialogVisible"
-      :type-options="typeOptions"
-      :type-meta="typeMeta"
-      @submit="handleCreateSubmit"
-    />
+    </div>
 
     <DeliveryDialog
       v-model="deliveryDialogVisible"
@@ -47,7 +65,7 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import RequestFilters from './components/RequestFilters.vue';
 import RequestList from './components/RequestList.vue';
-import CreateRequestDialog from './components/CreateRequestDialog.vue';
+import CreateRequestPage from './components/CreateRequestPage.vue';
 import DeliveryDialog from './components/DeliveryDialog.vue';
 import { useRequests } from './composables/useRequests.js';
 import { useCreateRequest } from './composables/useCreateRequest.js';
@@ -149,6 +167,15 @@ watch(visibleRequests, () => {
 watch([activeTab, selectedTag], () => {
   requestAnimationFrame(adjustGoogleSitesHeight);
 });
+
+// 監聽新增頁面狀態，控制 body 滾動條
+watch(createDialogVisible, (newValue) => {
+  if (newValue) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
 </script>
 
 <style scoped>
@@ -169,15 +196,65 @@ html {
 }
 
 .page-footer {
-  padding: 0 24px 32px;
+  padding: 0 24px 129px;
   text-align: center;
   color: #6b7280;
   font-size: 0.95rem;
 }
 
+.fixed-bottom-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  z-index: 1000;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+}
+
+.fixed-bottom-button {
+  width: 100%;
+  max-width: 335px;
+  height: 48px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1001;
+  background: #f8f9fa;
+  overflow: hidden;
+}
+
+.main-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 @media (max-width: 640px) {
   .page-main {
     padding: 0;
+  }
+  
+  .fixed-bottom-button {
+    bottom: 16px;
+    right: 16px;
+    padding: 14px 20px;
+    font-size: 0.95rem;
   }
 }
 </style>
