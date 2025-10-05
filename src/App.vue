@@ -1,9 +1,8 @@
 <template>
   <div class="app-shell">
-    <AppHeader @create="openCreate" />
-
     <main class="page-main">
       <RequestFilters
+        v-model:activeTab="activeTab"
         v-model:selectedTag="selectedTag"
         v-model:showPendingOnly="showPendingOnly"
         :type-options="typeOptions"
@@ -12,7 +11,7 @@
       <RequestList
         :requests="visibleRequests"
         :loading="loading"
-        :loading-more="loadingMore"
+        :loadin="loadingMore"
         :has-more="hasMore"
         :total-items="totalItems"
         :type-meta="typeMeta"
@@ -46,7 +45,6 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
-import AppHeader from './components/AppHeader.vue';
 import RequestFilters from './components/RequestFilters.vue';
 import RequestList from './components/RequestList.vue';
 import CreateRequestDialog from './components/CreateRequestDialog.vue';
@@ -63,10 +61,12 @@ const { submitting: createSubmitting, submitCreate } = useCreateRequest();
 const { submitting: deliverySubmitting, submitDelivery, submitDeliverAll } = useDelivery();
 
 // 篩選和顯示邏輯
+const activeTab = ref("pending");
 const selectedTag = ref("");
 const showPendingOnly = ref(false);
 const { typeOptions, typeMeta, isCompleted, visibleRequests } = useFilters(
   requests, 
+  activeTab,
   selectedTag, 
   showPendingOnly
 );
@@ -148,7 +148,7 @@ watch(visibleRequests, () => {
   requestAnimationFrame(adjustGoogleSitesHeight);
 });
 
-watch([selectedTag, showPendingOnly], () => {
+watch([activeTab, selectedTag, showPendingOnly], () => {
   requestAnimationFrame(adjustGoogleSitesHeight);
 });
 </script>

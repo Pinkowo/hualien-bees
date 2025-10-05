@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-export function useFilters(requests, selectedTag, showPendingOnly) {
+export function useFilters(requests, activeTab, selectedTag, showPendingOnly) {
   const TYPE_MAP = {
     "食物/水": { label: "飲食", order: 0, color: "#14b8a6" },
     醫療用品: { label: "醫療用品", order: 1, color: "#f59e0b" },
@@ -73,14 +73,26 @@ export function useFilters(requests, selectedTag, showPendingOnly) {
 
   const visibleRequests = computed(() => {
     let list = mergedRequests.value;
+    
+    // 根據 tab 篩選
+    if (activeTab.value === 'pending') {
+      list = list.filter((req) => !isCompleted(req));
+    } else if (activeTab.value === 'completed') {
+      list = list.filter((req) => isCompleted(req));
+    }
+    
+    // 類別篩選
     if (selectedTag.value) {
       list = list.filter((req) =>
         req.items.some((item) => item.type === selectedTag.value)
       );
     }
-    if (showPendingOnly.value) {
+    
+    // 待配送物資篩選（只在 pending tab 時有效）
+    if (showPendingOnly.value && activeTab.value === 'pending') {
       list = list.filter((req) => requestStatus(req).label === "尚缺");
     }
+    
     return list;
   });
 
