@@ -63,12 +63,10 @@ const { submitting: deliverySubmitting, submitDelivery, submitDeliverAll } = use
 // 篩選和顯示邏輯
 const activeTab = ref("pending");
 const selectedTag = ref("");
-const showPendingOnly = ref(false);
 const { typeOptions, typeMeta, isCompleted, visibleRequests } = useFilters(
   requests, 
   activeTab,
-  selectedTag, 
-  showPendingOnly
+  selectedTag
 );
 
 // 完成狀態摺疊管理
@@ -148,7 +146,7 @@ watch(visibleRequests, () => {
   requestAnimationFrame(adjustGoogleSitesHeight);
 });
 
-watch([activeTab, selectedTag, showPendingOnly], () => {
+watch([activeTab, selectedTag], () => {
   requestAnimationFrame(adjustGoogleSitesHeight);
 });
 </script>

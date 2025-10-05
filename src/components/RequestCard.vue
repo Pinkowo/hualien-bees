@@ -6,40 +6,30 @@
   >
     <div
       class="card-main"
-      :class="{ 'is-clickable': isCompleted }"
       @click="handleCardClick"
     >
-      <div class="card-header">
-        <div class="card-header-top">
-          <div class="card-title">
-            <h2>{{ request.org }}</h2>
-            <div class="tags">
-              <el-tag
-                v-for="tag in cardTags"
-                :key="tag.value"
-                size="small"
-                :style="{ backgroundColor: tag.color }"
-                effect="dark"
-              >
-                {{ tag.label }}
-              </el-tag>
-              <el-tag
-                size="small"
-                :type="requestStatus.type"
-                effect="dark"
-              >
-                {{ requestStatus.label }}
-              </el-tag>
-            </div>
-          </div>
-          <div class="published-at">
-            <el-icon><Clock /></el-icon>
-            <span class="meta-text">發布 {{ formatTimeAgo(request.created_at) }}</span>
-          </div>
+      <!-- 標題和發布時間 -->
+      <div class="card-title">
+        <h2>{{ request.org }}</h2>
+        <div class="published-at">
+          <span class="meta-text">{{ formatTimeAgo(request.created_at) }}</span>
         </div>
       </div>
 
-      <div v-show="!props.isCompletedCollapsed" class="card-body">
+      <!-- 標籤 -->
+      <div class="tags">
+        <el-tag
+          v-for="tag in cardTags"
+          :key="tag.value"
+          size="small"
+          class="custom-tag"
+          effect="dark"
+        >
+          {{ tag.label }}
+        </el-tag>
+      </div>
+
+      <div class="card-body">
         <div class="card-contact">
           <div class="section-title">聯絡資訊</div>
           <div class="contact-info">
@@ -76,28 +66,22 @@
             :class="{ 'is-fulfilled': isItemFulfilled(item) }"
           >
             <div class="item-info">
-              <div class="item-title">
-                <span class="item-name">{{ item.name }}</span>
-                <el-tag
-                  size="small"
-                  :style="{ backgroundColor: typeMeta(item.type).color }"
-                  effect="dark"
-                >
-                  {{ typeMeta(item.type).label }}
-                </el-tag>
-              </div>
+              <div class="item-title">{{ item.name }}</div>
               <div class="item-description">
-                <span>需求 {{ item.need }}{{ item.unit }}</span>
-                <span>
-                  已收到 {{ item.got }}/{{ item.need }}{{ item.unit }}，還需要：
-                  <strong class="need-number">{{ remainingNeed(item) }}{{ item.unit }}</strong>
-                </span>
+                <div class="item-requirement">需求 {{ item.need }} {{ item.unit }}</div>
+                <el-progress
+                  :format="() => ''"
+                  :percentage="progressPercentage(item)"
+                  :stroke-width="8"
+                  :show-text="false"
+                  class="compact-progress"
+                />
+                <div class="item-progress">
+                  <div>已收到 {{ item.got }} {{ item.unit }}</div>
+                  <strong class="need-number">尚需 {{ remainingNeed(item) }} {{ item.unit }}</strong>
+                </div>
               </div>
             </div>
-            <el-progress
-              :percentage="progressPercentage(item)"
-              :status="itemProgressStatus(item)"
-            />
           </div>
         </div>
       </div>
@@ -106,33 +90,19 @@
     <template #footer>
       <div
         class="card-footer"
-        :class="{ 'is-clickable': isCompleted }"
         @click="isCompleted ? handleCardClick : null"
       >
         <div v-if="!isCompleted" class="card-actions">
           <el-button
             type="primary"
-            :icon="Van"
+            class="delivery-button"
             @click.stop="$emit('delivery', request)"
           >
             我要配送
           </el-button>
         </div>
-        <div v-if="isCompleted" class="completed-toggle">
-          <el-button
-            :class="['completed-toggle-btn', { 'is-expanded': !props.isCompletedCollapsed }]"
-            circle
-            plain
-            size="small"
-            @click.stop="handleCardClick"
-          >
-            <el-icon><ArrowDown /></el-icon>
-          </el-button>
-        </div>
       </div>
     </template>
-
-    <div v-if="isCompleted" class="card-stamp">已完成</div>
   </el-card>
 </template>
 
@@ -271,7 +241,6 @@ const handleCardClick = () => {
 }
 
 .request-card.is-completed {
-  background: #e2e8f0;
   border: 1px solid #cbd5f5;
   cursor: default;
 }
@@ -282,15 +251,10 @@ const handleCardClick = () => {
   gap: 8px;
 }
 
-.card-header-top {
+.card-title {
+  width: 100%;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-.card-title {
-  display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
@@ -328,7 +292,7 @@ const handleCardClick = () => {
 .card-contact {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
 }
 
@@ -341,11 +305,8 @@ const handleCardClick = () => {
 .card-main {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   background: transparent;
-}
-
-.card-main.is-clickable {
-  cursor: pointer;
 }
 
 .card-footer {
@@ -360,8 +321,8 @@ const handleCardClick = () => {
   padding: 0;
 }
 
-.card-footer.is-clickable {
-  cursor: pointer;
+.request-card :deep(.el-card__footer) {
+  border-top: none;
 }
 
 .completed-toggle {
@@ -394,10 +355,6 @@ const handleCardClick = () => {
 }
 
 @media (hover: hover) {
-  .card-main.is-clickable:hover {
-    background: #f1f5f9;
-  }
-
   .completed-toggle-btn:hover {
     border-color: transparent;
   }
@@ -409,18 +366,11 @@ const handleCardClick = () => {
 }
 
 .section-title {
-  font-size: 0.85rem;
-  font-weight: 600;
+  height: 20px;
+  font-size: 16px;
+  font-weight: 500;
   color: #1f2937;
   position: relative;
-}
-
-.section-title::before {
-  content: "";
-  display: block;
-  width: 100%;
-  border-top: 1px dashed #e2e8f0;
-  margin: 12px 0;
 }
 
 .contact-info {
@@ -450,11 +400,11 @@ const handleCardClick = () => {
 .contact-link-map {
   text-decoration: underline;
   text-underline-offset: 3px;
-  color: var(--el-color-primary);
+  color: #F37C0E;
 }
 
 .contact-link-map:hover {
-  color: var(--el-color-primary-dark-2);
+  color: #F37C0E;
 }
 
 .contact-link-icon {
@@ -463,11 +413,7 @@ const handleCardClick = () => {
 }
 
 .contact-link-phone {
-  color: #0f766e;
-}
-
-.contact-link-phone:hover {
-  color: #0d9488;
+  color: #F37C0E;
 }
 
 .contact-row :deep(.el-icon) {
@@ -494,12 +440,6 @@ const handleCardClick = () => {
   padding-top: 12px;
 }
 
-.item-row.is-fulfilled {
-  background: #f3f4f6;
-  border-radius: 12px;
-  padding: 12px;
-}
-
 .item-row.is-fulfilled + .item-row {
   border-top: none;
 }
@@ -510,33 +450,42 @@ const handleCardClick = () => {
 
 .item-row.is-fulfilled .item-description,
 .item-row.is-fulfilled .need-number {
-  color: #6b7280;
+  color: #434343;
 }
 
 .item-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border-radius: 12px;
+  border: 1px solid #E6E6E6;
+  padding: 12px;
 }
 
 .item-title {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.item-name {
+  font-size: 16px;
   font-weight: 600;
   font-size: 1rem;
+  color: #434343;
 }
 
 .item-description {
   display: flex;
   flex-direction: column;
   font-size: 0.9rem;
-  color: #4b5563;
+  color: #434343;
   gap: 4px;
   width: 100%;
+}
+
+.item-requirement {
+  height: 20px;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
 }
 
 .need-number {
@@ -548,22 +497,6 @@ const handleCardClick = () => {
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-}
-
-.card-stamp {
-  position: absolute;
-  top: 16px;
-  right: 12px;
-  transform: rotate(10deg);
-  padding: 6px 32px;
-  font-weight: 700;
-  border: 3px solid #22c55e;
-  color: #15803d;
-  border-radius: 12px;
-  background: rgba(34, 197, 94, 0.12);
-  font-size: 1rem;
-  z-index: 5;
-  pointer-events: none;
 }
 
 @media (min-width: 768px) {
@@ -580,16 +513,57 @@ const handleCardClick = () => {
   }
 }
 
-.request-card.is-completed .card-main,
-.request-card.is-completed .card-header,
-.request-card.is-completed .card-header-top,
-.request-card.is-completed .card-body,
-.request-card.is-completed .card-content,
-.request-card.is-completed .card-footer,
-.request-card.is-completed .card-contact,
-.request-card.is-completed .item-row,
-.request-card.is-completed .card-actions {
-  background: #e2e8f0;
+.custom-tag {
+  height: 28px;
+  padding: 8px 12px;
+  border-radius: 1000px;
+  color: #434343 !important;
+  background-color: #F4F4F5 !important;
+  font-weight: 500;
+}
+
+.compact-progress {
+  margin: 0;
+  line-height: 1;
+}
+
+.compact-progress :deep(.el-progress__text) {
+  display: none !important;
+}
+
+.compact-progress :deep(.el-progress-bar__outer) {
+  margin-right: 0 !important;
+}
+
+.item-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+  width: 100%;
+}
+
+.delivery-button {
+  height: 48px;
+  min-height: 48px;
+  min-width: 303px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  gap: 8px;
+  background: #F37C0E;
+}
+
+.delivery-button:hover {
+  background: #F37C0E;
+  opacity: 0.8;
+}
+
+.delivery-button:active {
+  background: #F37C0E;
 }
 </style>
 
